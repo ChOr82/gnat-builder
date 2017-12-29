@@ -3,7 +3,7 @@
 # prefix = /usr/local/gnat, /usr/gnat, etc.
 #
 
-branch ?= master
+branch ?= gpl-2017
 gcc-branch ?= $(branch)
 prefix ?= /usr/local/gnat
 gnu-mirror ?= http://mirrors.kernel.org/gnu
