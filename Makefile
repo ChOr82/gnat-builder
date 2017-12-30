@@ -187,6 +187,12 @@ gcc: gcc-build gcc-src
 	--enable-shared --enable-shared-host
 	cd $<  && make -j8
 
+.PHONY: gcc-install
+gcc-install: gcc-build
+	make -C $< prefix=$(prefix) install
+	rm -rf $<-save
+	mv $< $<-save
+
 .PHONY: gprbuild-bootstrap
 
 gprbuild-bootstrap: gprbuild-bootstrap-build xmlada-bootstrap-build
