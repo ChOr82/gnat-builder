@@ -183,7 +183,7 @@ gnatcoll-xref-build \
 gcc: gcc-build gcc-src
 	cd $< && ../gcc-src/configure \
 	--prefix=$(prefix) --enable-languages=c,c++,ada \
-	--disable-bootstrap --disable-multilib \
+	--disable-multilib \
 	--enable-shared --enable-shared-host
 	cd $<  && make -j8
 
@@ -245,7 +245,6 @@ libadalang-install: libadalang-build clean-libadalang-prefix
 	&& ada/manage.py install $(prefix) \
 	&& deactivate
 
-
 .PHONY: clean-libadalang-prefix
 clean-libadalang-prefix:
 	# clean up old langkit install if there
@@ -265,8 +264,6 @@ clean-libadalang-prefix:
 	rm -rf $(prefix)/bin/navigate
 	rm -rf $(prefix)/bin/gnat_compare
 	rm -rf $(prefix)/bin/nameres
-
-##############################################################
 
 .PHONY: gps
 gps: gps-build
