@@ -132,8 +132,8 @@ github-src/%/gpl-2017          \
 github-src/%/gcc-7_2_0-release \
 github-src/%/gcc-7-branch      \
 github-src/%/master: github-cache/%
-	cd github-cache/$(@D:github-src/%=%) && git fetch --all
 	cd github-cache/$(@D:github-src/%=%) && git checkout -f $(@F)
+	cd github-cache/$(@D:github-src/%=%) && git pull
 	rm -rf $(@D)/*
 	mkdir -p $(@D)
 	ln -sf $(PWD)/github-cache/$(@D:github-src/%=%) $@
