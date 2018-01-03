@@ -1,10 +1,10 @@
 # branch = gpl-2017
-# gcc-branch = master, gcc-7-branch, gcc-7_2_0-release (gpl-2017)
+# gcc-branch = gcc-7-branch
 # prefix = /usr/local/gnat, /usr/gnat, etc.
 #
 
 branch ?= gpl-2017
-gcc-branch ?= gcc-7_2_0-release
+gcc-branch ?= gcc-7-branch
 prefix ?= /usr/local/gnat
 gnu-mirror ?= http://mirrors.kernel.org/gnu
 github-org ?= adacore
@@ -15,7 +15,10 @@ llvm-version ?= 3.8
 iconv-opt ?= "-lc"
 
 .PHONY: default
-default: no-default
+default: all
+
+.PHONY: install
+install: install-all
 
 ##############################################################
 
@@ -31,33 +34,25 @@ install-prerequisites:
 	python-dev python-pip python-gobject-dev python-cairo-dev \
 	libclang-dev
 
-%-clean:
-	rm -rf $(@:%-clean=%)-src $(@:%-clean=%)-build
-
-.PHONY: bootstrap-clean
-bootstrap-clean: clean prefix-clean
-
-.PHONY: dist-clean
-dist-clean :
-	rm -rf *-src *-build *-cache *-save
-
 .PHONY: clean
 clean: 
 	rm -rf *-src *-build
 
-.PHONY: prefix-clean
-prefix-clean:
+.PHONY: bootstrap-clean
+bootstrap-clean: clean
 	rm -rf $(prefix)/*
 
-.PHONY: bootstrap
-bootstrap: | bootstrap-gcc bootstrap-adacore
+.PHONY: dist-clean
+dist-clean : clean
+	rm -rf *-cache
 
-.PHONY: bootstrap-gcc
-bootstrap-gcc: | gcc gcc-install
+%-clean:
+	rm -rf $(@:%-clean=%)-src $(@:%-clean=%)-build
 
-.PHONY: bootstrap-adacore
-bootstrap-adacore: |          \
-gprbuild-bootstrap            \
+.PHONY: bootstrap-install
+bootstrap-install: | \
+gcc-bootstrap gcc-install     \
+gprbuild-bootstrap-install    \
 xmlada xmlada-install         \
 gprbuild gprbuild-install     \
 gtkada gtkada-install         \
@@ -65,6 +60,26 @@ gnat_util gnat_util-install   \
 gnatcoll gnatcoll-install     \
 libadalang libadalang-install \
 gps gps-install
+
+.PHONY: all
+all:       \
+xmlada     \
+gprbuild   \
+gtkada     \
+gnat_util  \
+gnatcoll   \
+libadalang \
+gps
+
+.PHONY: all-installi
+all-install:       \
+xmlada-install     \
+gprbuild-install   \
+gtkada-install     \
+gnat_util-install  \
+gnatcoll-install   \
+libadalang-install \
+gps-install
 
 ##############################################################
 #
@@ -80,6 +95,7 @@ gps gps-install
 # from github
 
 gcc-src: github-src/gcc-mirror/gcc/$(gcc-branch)
+
 xmlada-src: github-src/$(github-org)/xmlada/$(branch)
 gprbuild-src: github-src/$(github-org)/gprbuild/$(branch)
 gtkada-src: github-src/$(github-org)/gtkada/$(branch)
@@ -100,9 +116,8 @@ quex-src: github-src/steve-cs/quex/0.65.4
 xmlada-bootstrap-src: xmlada-src
 gprbuild-bootstrap-src: gprbuild-src
 
-# Patch together a gnat_util that works with a gcc-7
-# working with both gcc-7_2_0-release and gcc-7-branch
-
+# Patch together a gnat_util that works with gcc-7-branch
+#
 gnat_util-src: gnat_util-gpl-2017-src gcc-src
 	rm -rf $@ gnat_util-temp
 	mkdir gnat_util-temp
@@ -129,7 +144,6 @@ gnat_util-src: gnat_util-gpl-2017-src gcc-src
 
 github-src/%/0.65.4            \
 github-src/%/gpl-2017          \
-github-src/%/gcc-7_2_0-release \
 github-src/%/gcc-7-branch      \
 github-src/%/master: github-cache/%
 	cd github-cache/$(@D:github-src/%=%) && git checkout -f $(@F)
@@ -183,19 +197,21 @@ gnatcoll-xref-build \
 gcc: gcc-build gcc-src
 	cd $< && ../gcc-src/configure \
 	--prefix=$(prefix) --enable-languages=c,c++,ada \
-	--disable-multilib \
+	--disable-bootstrap --disable-multilib \
 	--enable-shared --enable-shared-host
 	cd $<  && make -j8
 
-.PHONY: gcc-install
-gcc-install: gcc-build
-	make -C $< prefix=$(prefix) install
-	rm -rf $<-save
-	mv $< $<-save
+.PHONY: gcc-bootstrap
+gcc-bootstrap: gcc-build gcc-src
+	cd $< && ../gcc-src/configure \
+	--prefix=$(prefix) --enable-languages=c,c++,ada \
+	--enable-bootstrap --disable-multilib \
+	--enable-shared --enable-shared-host
+	cd $<  && make -j8
 
-.PHONY: gprbuild-bootstrap
+.PHONY: gprbuild-bootstrap-install
 
-gprbuild-bootstrap: gprbuild-bootstrap-build xmlada-bootstrap-build
+gprbuild-bootstrap-install: gprbuild-bootstrap-build xmlada-bootstrap-build
 	cd $<  && ./bootstrap.sh \
 	--with-xmlada=../xmlada-bootstrap-build --prefix=$(prefix)
 
